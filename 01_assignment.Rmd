@@ -47,6 +47,8 @@ Once you've chosen that, you might want to look through some of the other *Build
 
 * Include a link to your website below. (If anyone does not want to post a website publicly, please talk to me and we will find a different solution).  
 
+https://fervent-morse-64599e.netlify.app/
+
 * Listen to at least the first 20 minutes of "Building a Career in Data Science, Chapter 4: Building a Portfolio". Go to the main [podcast website](https://podcast.bestbook.cool/) and navigate to a podcast provider that works for you to find that specific episode. Write 2-3 sentences reflecting on what they discussed and why creating a website might be helpful for you.  
 
 * (Optional) Create an R package with your own customized `gpplot2` theme! Write a post on your website about why you made the choices you did for the theme. See the *Building an R package* and *Custom `ggplot2` themes* [resources](https://advanced-ds-in-r.netlify.app/resources.html). 
@@ -68,26 +70,17 @@ Read through and follow along with the [Machine Learning review with an intro to
 2. Create some exploratory plots or table summaries of the data, concentrating most on relationships with the response variable. Keep in mind the response variable is numeric, 0 or 1. You may want to make it categorical (you also may not). Be sure to also examine missing values or other interesting values.  
 
 ```{r}
-hotels_2 <- hotels %>%
-  transform(is_canceled = if_else(is_canceled !=0, TRUE, FALSE))
-
-
-ggplot(hotels) + 
-  aes(x = previous_cancellations) + 
-  geom_histogram() + 
-  facet_wrap(~is_canceled)
-
-
-ggplot(hotels_2) + 
-  aes(x = is_canceled, y =lead_time) + 
-  geom_boxplot()
-
-
-ggplot(hotels_2) + 
-  aes(x = booking_changes, fill = is_canceled) + 
-  geom_histogram(position = "dodge")
-
+hotels %>% 
+  select(where(is.numeric)) %>% 
+  pivot_longer(cols = everything(),
+               names_to = "variable", 
+               values_to = "value") %>% 
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(vars(variable), 
+             scales = "free")
 ```
+
 
 
 3. First, we will do a couple things to get the data ready, including making the outcome a factor (needs to be that way for logistic regression), removing the year variable and some reservation status variables, and removing missing values (not NULLs but true missing values). Split the data into a training and test set, stratifying on the outcome variable, `is_canceled`. Since we have a lot of data, we're going to split the data 50/50 between training and test. I have already `set.seed()` for you. Be sure to use `hotels_mod` in the splitting.
@@ -104,10 +97,11 @@ hotels_mod <- hotels %>%
   select(-n_miss_all)
 
 set.seed(494)
-df <- sort(sample(nrow(hotels_mod), nrow(hotels_mod) * .5))
 
-train_data<- hotels_mod[df,]
-test_data<- hotels_mod[-df,]
+hotels_split <- initial_split(hotels_mod, prop = 1/2)
+
+hotel_training <- training(hotels_split)
+hotel_test <- testing(hotels_split)
 
 ```
 
