@@ -86,6 +86,8 @@ hotels %>%
 3. First, we will do a couple things to get the data ready, including making the outcome a factor (needs to be that way for logistic regression), removing the year variable and some reservation status variables, and removing missing values (not NULLs but true missing values). Split the data into a training and test set, stratifying on the outcome variable, `is_canceled`. Since we have a lot of data, we're going to split the data 50/50 between training and test. I have already `set.seed()` for you. Be sure to use `hotels_mod` in the splitting.
 
 ```{r}
+
+# splitting Data
 hotels_mod <- hotels %>% 
   mutate(is_canceled = as.factor(is_canceled)) %>% 
   mutate(across(where(is.character), as.factor)) %>% 
@@ -117,24 +119,32 @@ hotel_test <- testing(hotels_split)
 * Use the `prep()` and `juice()` functions to apply the steps to the training data just to check that everything went as planned.
 
 
+
 ```{r}
-?step_mutate_at
+# Building the Recipe
 
 hotels_recipe <- recipe(is_canceled~.,
                         data = hotel_training) %>%
-  step_mutate_at(contains("child"), fn = ~1/.)%>%
-  step_mutate_at(contains("babies"), fn = ~1/.) %>%
-  step_mutate_at(contains("cancellations"), fn = ~1/.) %>%
-  step_mutate(agent = as.character(agent), 
-              agent = fct_relevel(
-                case_when(
-                  is.null(agent) ~ "1"
-                  
-                ),
-                "1", "0"))
+  step_mutate_at(babies, children, previous_cancellations, 
+                 fn = ~as.numeric(. > 0)) %>%
+  step_mutate_at(agent, company, 
+                 fn = ~ as.numeric(.== "NULL")) %>%
+  step_mutate(country = fct_lump_n(country, 5)) %>%
+  step_normalize(all_predictors(), 
+                 -all_nominal()) %>%
+  step_dummy(all_predictors(), 
+             -all_outcomes()) 
   
 ```
 
+
+```{r}
+#Prepping and Juicing
+
+hotels_recipe %>%
+  prep(hotel_training) %>%
+  juice()
+```
 
 
 
@@ -143,6 +153,33 @@ hotels_recipe <- recipe(is_canceled~.,
 * In general, why would we want to use LASSO instead of regular logistic regression? (HINT: think about what happens to the coefficients).  
 * Define the model type, set the engine, set the `penalty` argument to `tune()` as a placeholder, and set the mode.  
 * Create a workflow with the recipe and model.  
+
+We may want to use LASSo instead of normal logistic regression because the LASSO algorithm gives us a model with only the best predictors that give us the best RMSE. 
+
+
+```{r}
+#setting up model
+
+hotel_lasso_mod <-
+  linear_reg(mixture = 1) %>%
+  set_engine("glmnet") %>%
+  set_args(penalty = tune())%>%
+  set_mode("classification")
+```
+
+
+```{r}
+#Creating Workflow
+
+hotel_wf <- 
+  workflow() %>%
+  add_recipe(hotels_recipe) %>%
+  add_model(hotel_lasso_mod)
+
+hotel_wf
+```
+
+
 
 6. In this step, we'll tune the model and fit the model using the best tuning parameter to the entire training dataset.
 
@@ -154,7 +191,29 @@ hotels_recipe <- recipe(is_canceled~.,
 
 ```{r}
 set.seed(494) # for reproducibility
+hotel_cv <- vfold_cv(hotel_training, v= 5)
 
+
+penalty_grid <- grid_regular(penalty(), 
+                             levels = 10)
+
+hotel_tune <- 
+  hotel_wf %>%
+  tune_grid(resamples = hotel_cv, 
+            grid = penalty_grid)
+
+
+hotel_tune %>% 
+  collect_metrics() %>% 
+  filter(.metric == "rmse") %>%
+  ggplot() + 
+  aes(x = penalty, y = mean) + 
+  geom_point() + 
+  geom_line() + 
+  scale_x_log10(
+    breaks = scales::trans_breaks("log10", function(x) 10^x), 
+    labels = scales:: trans_format("log10", scales::math_format(10^x))) + 
+  labs(x = "penalty", y = "rmse")
 
 ```
 
