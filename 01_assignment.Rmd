@@ -124,7 +124,15 @@ hotels_recipe <- recipe(is_canceled~.,
                         data = hotel_training) %>%
   step_mutate_at(contains("child"), fn = ~1/.)%>%
   step_mutate_at(contains("babies"), fn = ~1/.) %>%
-  step_mutate_at(contains("cancellations"), fn = ~1/.)
+  step_mutate_at(contains("cancellations"), fn = ~1/.) %>%
+  step_mutate(agent = as.character(agent), 
+              agent = fct_relevel(
+                case_when(
+                  is.null(agent) ~ "1"
+                  
+                ),
+                "1", "0"))
+  
 ```
 
 
