@@ -118,7 +118,13 @@ hotel_test <- testing(hotels_split)
 
 
 ```{r}
+?step_mutate_at
 
+hotels_recipe <- recipe(is_canceled~.,
+                        data = hotel_training) %>%
+  step_mutate_at(contains("child"), fn = ~1/.)%>%
+  step_mutate_at(contains("babies"), fn = ~1/.) %>%
+  step_mutate_at(contains("cancellations"), fn = ~1/.)
 ```
 
 
