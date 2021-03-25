@@ -161,7 +161,7 @@ We may want to use LASSo instead of normal logistic regression because the LASSO
 #setting up model
 
 hotel_lasso_mod <-
-  linear_reg(mixture = 1) %>%
+  logistic_reg(mixture = 1) %>%
   set_engine("glmnet") %>%
   set_args(penalty = tune())%>%
   set_mode("classification")
@@ -204,15 +204,19 @@ hotel_tune <-
 
 
 hotel_tune %>% 
+  select(id, .metrics) %>% 
+  unnest(.metrics) %>% 
+  filter(.metric == "rmse")
+
+hotel_tune %>% 
   collect_metrics() %>% 
-  filter(.metric == "rmse") %>%
-  ggplot() + 
-  aes(x = penalty, y = mean) + 
-  geom_point() + 
-  geom_line() + 
+  filter(.metric == "rmse") %>% 
+  ggplot(aes(x = penalty, y = mean)) +
+  geom_point() +
+  geom_line() +
   scale_x_log10(
-    breaks = scales::trans_breaks("log10", function(x) 10^x), 
-    labels = scales:: trans_format("log10", scales::math_format(10^x))) + 
+   breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10",scales::math_format(10^.x))) +
   labs(x = "penalty", y = "rmse")
 
 ```
@@ -224,6 +228,32 @@ hotel_tune %>%
 * Use the `last_fit()` function to fit the final model and then apply it to the testing data. Report the metrics from the testing data using the `collet_metrics()` function. How do they compare to the cross-validated metrics?
 * Use the `collect_predictions()` function to find the predicted probabilities and classes for the test data. Save this to a new dataset called `preds`. Then, use the `conf_mat()` function from `dials` (part of `tidymodels`) to create a confusion matrix showing the predicted classes vs. the true classes. What is the true positive rate (sensitivity)? What is the true negative rate (specificity)? See this [Wikipedia](https://en.wikipedia.org/wiki/Confusion_matrix) reference if you (like me) tend to forget these definitions.
 * Use the `preds` dataset you just created to create a density plot of the predicted probabilities of canceling (the variable is called `.pred_1`), filling by `is_canceled`. Use an `alpha = .5` and `color = NA` in the `geom_density()`. Answer these questions: a. What would this graph look like for a model with an accuracy that was close to 1? b. Our predictions are classified as canceled if their predicted probability of canceling is greater than .5. If we wanted to have a high true positive rate, should we make the cutoff for predicted as canceled higher or lower than .5? c. What happens to the true negative rate if we try to get a higher true positive rate? 
+
+
+```{r}
+hotel_fit_wf <- hotel_wf %>%
+  fit(data = hotel_training)
+
+
+
+hotel_fit_wf %>%
+  pull_workflow_fit() %>%
+  vip()
+```
+
+
+
+```{r}
+best_param <- hotel_tune %>% 
+  select_best(metric = "rmse")
+
+ hotel_final_wf <- hotel_wf %>% 
+  finalize_workflow(best_param)
+
+hotel_lasso_test <- hotel_final_wf %>% 
+  last_fit(hotels_split)
+```
+
 
 8. Let's say that this model is going to be applied to bookings 14 days in advance of their arrival at each hotel, and someone who works for the hotel will make a phone call to the person who made the booking. During this phone call, they will try to assure that the person will be keeping their reservation or that they will be canceling in which case they can do that now and still have time to fill the room. How should the hotel go about deciding who to call? How could they measure whether it was worth the effort to do the calling? Can you think of another way they might use the model? 
 
