@@ -202,6 +202,8 @@ hotel_tune <-
   tune_grid(resamples = hotel_cv, 
             grid = penalty_grid)
 
+hotel_tune
+
 
 hotel_tune %>% 
   select(id, .metrics) %>% 
@@ -252,21 +254,33 @@ best_param <- hotel_tune %>%
 
 hotel_lasso_test <- hotel_final_wf %>% 
   last_fit(hotels_split)
+
+
+preds <- collect_predictions(hotel_lasso_test)
+
+conf_mat(hotel_test, hotel_lasso_test)
+
+ggplot(preds) + 
+  aes(x = pred_1, fill = is_canceled) + 
+  geom_density(alpha = 0.5, color = NA)
+
 ```
 
 
 8. Let's say that this model is going to be applied to bookings 14 days in advance of their arrival at each hotel, and someone who works for the hotel will make a phone call to the person who made the booking. During this phone call, they will try to assure that the person will be keeping their reservation or that they will be canceling in which case they can do that now and still have time to fill the room. How should the hotel go about deciding who to call? How could they measure whether it was worth the effort to do the calling? Can you think of another way they might use the model? 
 
+
+
 9. How might you go about questioning and evaluating the model in terms of fairness? Are there any questions you would like to ask of the people who collected the data? 
 
-
+In terms of fairness we would 
 
 
 
 
 ## Bias and Fairness
 
-Listen to Dr. Rachel Thomas's  [Bias and Fairness lecture](https://ethics.fast.ai/videos/?lesson=2). Write a brief paragraph reflecting on it. You might also be interested in reading the [ProPublica article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing) Dr. Thomas references about using a tool called COMPAS to predict recidivism. Some questions/ideas you might keep in mind:
+Listen to Dr. Rachel Thomas's  [Bias and Fairness lecture](). Write a brief paragraph reflecting on it. You might also be interested in reading the [ProPublica] article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing) Dr. Thomas references about using a tool called COMPAS to predict recidivism. Some questions/ideas you might keep in mind:
 
 * Did you hear anything that surprised you?  
 * Why is it important that we pay attention to bias and fairness when studying data science?  
