@@ -51,6 +51,8 @@ https://fervent-morse-64599e.netlify.app/
 
 * Listen to at least the first 20 minutes of "Building a Career in Data Science, Chapter 4: Building a Portfolio". Go to the main [podcast website](https://podcast.bestbook.cool/) and navigate to a podcast provider that works for you to find that specific episode. Write 2-3 sentences reflecting on what they discussed and why creating a website might be helpful for you.  
 
+Creating a website would be helpful for me because it is a very nice and easy to keep my projects. 
+
 * (Optional) Create an R package with your own customized `gpplot2` theme! Write a post on your website about why you made the choices you did for the theme. See the *Building an R package* and *Custom `ggplot2` themes* [resources](https://advanced-ds-in-r.netlify.app/resources.html). 
 
 ## Machine Learning review and intro to `tidymodels`
@@ -246,34 +248,36 @@ hotel_fit_wf %>%
 
 
 ```{r}
-best_param <- hotel_tune %>% 
-  select_best(metric = "rmse")
+#This code did not work so I am commenting it out to knit.
 
- hotel_final_wf <- hotel_wf %>% 
-  finalize_workflow(best_param)
+#best_param <- hotel_tune %>% 
+ # select_best(metric = "rmse")
 
-hotel_lasso_test <- hotel_final_wf %>% 
-  last_fit(hotels_split)
+ #hotel_final_wf <- hotel_wf %>% 
+  #finalize_workflow(best_param)
+
+#hotel_lasso_test <- hotel_final_wf %>% 
+ # last_fit(hotels_split)
 
 
-preds <- collect_predictions(hotel_lasso_test)
+#preds <- collect_predictions(hotel_lasso_test)
 
-conf_mat(hotel_test, hotel_lasso_test)
+#conf_mat(hotel_test, hotel_lasso_test)
 
-ggplot(preds) + 
-  aes(x = pred_1, fill = is_canceled) + 
-  geom_density(alpha = 0.5, color = NA)
+#ggplot(preds) + 
+ # aes(x = pred_1, fill = is_canceled) + 
+  #ageom_density(alpha = 0.5, color = NA)
 
 ```
 
 
 8. Let's say that this model is going to be applied to bookings 14 days in advance of their arrival at each hotel, and someone who works for the hotel will make a phone call to the person who made the booking. During this phone call, they will try to assure that the person will be keeping their reservation or that they will be canceling in which case they can do that now and still have time to fill the room. How should the hotel go about deciding who to call? How could they measure whether it was worth the effort to do the calling? Can you think of another way they might use the model? 
 
-
+The hotel should decide who to call based on what person has the highest probability of cancelling, someone who checks most of the boxes of cancellations. THey could measure whether it was worth the effort or not based on the models prediction of how likely that person was to cancel. 
 
 9. How might you go about questioning and evaluating the model in terms of fairness? Are there any questions you would like to ask of the people who collected the data? 
 
-In terms of fairness we would 
+In terms of fairness I would ask whether or not the data was collected with any racial bias to see if my model could possibly be unfair to people of color. 
 
 
 
@@ -287,3 +291,4 @@ Listen to Dr. Rachel Thomas's  [Bias and Fairness lecture](). Write a brief para
 * Is there a type of bias Dr. Thomas discussed that was new to you? Can you think about places you have seen these types of biases?
 
 
+This video was very interesting to me. I never truly thought about the ways that data and technology can be biased. The thing that surprised me the most was that there were so many different programs that were increibly biased like facebook allowing people to filter ads by race and gender. The aggregation bias was very new to me. I had never heard about that before. It is really important to pay attention to bias because we must recognize that our models and data can be biased against certain groups of people. 
